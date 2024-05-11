@@ -80,6 +80,8 @@ else
     exit
 fi
 
+df -h
+
 if [ "$(echo $baserom |grep miui_)" != "" ];then
     device_code=$(basename $baserom |cut -d '_' -f 2)
 elif [ "$(echo $baserom |grep xiaomi.eu_)" != "" ];then
@@ -140,10 +142,14 @@ if [[ ${baserom_type} == 'payload' ]];then
     blue "正在提取底包 [payload.bin]" "Extracting files from BASEROM [payload.bin]"
     unzip ${baserom} payload.bin -d build/baserom > /dev/null 2>&1 ||error "解压底包 [payload.bin] 时出错" "Extracting [payload.bin] error"
     green "底包 [payload.bin] 提取完毕" "[payload.bin] extracted."
+    rm -f ${baserom}
+    red "底包 [${baserom}] 已删除"
 elif [[ ${baserom_type} == 'br' ]];then
     blue "正在提取底包 [new.dat.br]" "Extracting files from BASEROM [*.new.dat.br]"
     unzip ${baserom} -d build/baserom  > /dev/null 2>&1 || error "解压底包 [new.dat.br]时出错" "Extracting [new.dat.br] error"
     green "底包 [new.dat.br] 提取完毕" "[new.dat.br] extracted."
+    rm -f ${baserom}
+    red "底包 [${baserom}] 已删除"
 elif [[ ${is_base_rom_eu} == true ]];then
     blue "正在提取底包 [super.img]" "Extracting files from BASETROM [super.img]"
     unzip ${baserom} 'images/*' -d build/baserom >  /dev/null 2>&1 ||error "解压移植包 [super.img] 时出错"  "Extracting [super.img] error"
@@ -159,6 +165,8 @@ elif [[ ${is_base_rom_eu} == true ]];then
         simg2img build/baserom/firmware-update/cust.img.* build/baserom/firmware-update/cust.img
         rm -rf build/baserom/firmware-update/cust.img.*
     fi
+    rm -f ${baserom}
+    red "底包 [${baserom}] 已删除"
 fi
 
 if [[ ${is_eu_rom} == true ]];then
@@ -169,11 +177,17 @@ if [[ ${is_eu_rom} == true ]];then
     rm -rf build/portrom/images/super.img.*
     mv build/portrom/images/super.img build/portrom/super.img
     green "移植包 [super.img] 提取完毕" "[super.img] extracted."
+    rm -f ${portrom}
+    red "移植包 [${portrom}] 已删除"
 else
     blue "正在提取移植包 [payload.bin]" "Extracting files from PORTROM [payload.bin]"
     unzip ${portrom} payload.bin -d build/portrom  > /dev/null 2>&1 ||error "解压移植包 [payload.bin] 时出错"  "Extracting [payload.bin] error"
     green "移植包 [payload.bin] 提取完毕" "[payload.bin] extracted."
+    rm -f ${portrom}
+    red "移植包 [${portrom}] 已删除"
 fi
+
+df -h
 
 if [[ ${baserom_type} == 'payload' ]];then
 
@@ -244,6 +258,8 @@ for part in ${super_list};do
     fi
 done
 rm -rf config
+
+df -h
 
 blue "正在获取ROM参数" "Fetching ROM build prop."
 
@@ -1272,3 +1288,4 @@ mv out/${os_type}_${device_code}_${port_rom_version}.zip out/${os_type}_${device
 green "移植完毕" "Porting completed"    
 green "输出包路径：" "Output: "
 green "$(pwd)/out/${os_type}_${device_code}_${port_rom_version}_${hash}_${port_android_version}_${port_rom_code}_${pack_timestamp}_${pack_type}.zip"
+df -h

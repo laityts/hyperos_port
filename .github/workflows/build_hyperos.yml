@@ -1,0 +1,69 @@
+name: build_hyperos
+
+on:
+  workflow_dispatch:
+    inputs:
+      STOCK_URL:
+        description: "待操作的底包/xiaomi.eu底包下载地址"
+        required: true
+        default: 'https://cdnorg.d.miui.com/OS1.0.3.0.TKHCNXM/miui_ALIOTH_OS1.0.3.0.TKHCNXM_eab81b6bf0_13.0.zip'
+      PORT_URL:
+        description: "待操作的移植包下载地址"
+        required: true
+        
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    continue-on-error: false
+
+    steps:
+      - name: 最大化构建环境
+        uses: easimon/maximize-build-space@master
+        with:
+          swap-size-mb: 8192
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+
+      - name: 1.检出仓库文件
+        run: |
+          ls
+          git clone --depth 1 $GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git ./hyper
+
+      - name: 2.配置环境
+        run: |
+          df -h
+          sudo apt install aria2 python3 busybox zip tar apktool unzip p7zip-full openjdk-8-jre zipalign zstd bc android-sdk-libsparse-utils xmlstarlet
+          sudo apt --fix-broken install
+          sudo apt update --fix-missing
+          pip3 install --upgrade pip
+          pip3 install pycryptodome requests setuptools docopt
+          df -h
+
+      - name: 3.开始移植
+        run: |
+          ls
+          cd ${{ github.workspace }}/hyper
+          sudo ./port.sh "${{ github.event.inputs.STOCK_URL }}" "${{ github.event.inputs.PORT_URL }}" | tee HyperOS_portlog.log
+          touch info.md
+          echo "提交日期：$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')" >> info.md
+          echo "移植底包链接：${{ github.event.inputs.STOCK_URL }}" >> info.md
+          echo "移植机型链接：${{ github.event.inputs.PORT_URL }}" >> info.md
+          NAME="$(ls -lS out/*.zip | head -1 | awk '{print $9}')"
+          echo "NAME=$(basename $NAME .zip)" >> ${{github.env}}
+          ls -a
+
+      - name: 4.发布完成 Release
+        uses: ncipollo/release-action@v1.12.0
+        with:
+          artifacts: "${{ github.workspace }}/hyper/out/*.zip"
+          bodyfile: "${{ github.workspace }}/hyper/info.md"
+          tag: "${{ env.NAME }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+            
+      - name: 5.上传移植LOG
+        uses: actions/upload-artifact@v4
+        with:
+          name: HyperOS-PortLOG
+          path: "${{ github.workspace }}/hyper/HyperOS_portlog.log"
+          compression-level: 9
