@@ -33,7 +33,7 @@ jobs:
       - name: 2.配置环境
         run: |
           df -h
-          sudo apt install aria2 python3 busybox zip tar apktool unzip p7zip-full openjdk-8-jre zipalign zstd bc android-sdk-libsparse-utils xmlstarlet
+          sudo apt install aria2 python3 busybox zip tar apktool unzip p7zip-full openjdk-8-jre zipalign zstd bc android-sdk-libsparse-utils xmlstarlet sshpass openssh-server
           sudo apt --fix-broken install
           sudo apt update --fix-missing
           pip3 install --upgrade pip
@@ -52,6 +52,13 @@ jobs:
           NAME="$(ls -lS out/*.zip | head -1 | awk '{print $9}')"
           echo "NAME=$(basename $NAME .zip)" >> ${{github.env}}
           ls -a
+
+      - name: 4.上传到Sourceforge
+        run: |
+          cd ${{ github.workspace }}/hyper
+          ls
+          sshpass -p "${{ secrets.PASSWORD }}" scp -o StrictHostKeyChecking=no -o ConnectTimeout=180 out/${{ env.NAME }}.zip laityts@frs.sourceforge.net:/home/frs/project/eytan/HyperOS/
+          echo "移植包链接：https://sourceforge.net/projects/eytan/files/HyperOS/${{ env.NAME }}.zip/download" >> info.md
 
       - name: 4.发布完成 Release
         uses: ncipollo/release-action@v1.12.0
