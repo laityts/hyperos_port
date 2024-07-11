@@ -21,7 +21,7 @@ if [ "$(uname -m)" == "aarch64" ];then
     echo "Device arch: aarch64"
     apt update -y
     apt upgrade -y
-    apt install -y python busybox zip unzip p7zip openjdk-17 zipalign zstd xmlstarlet
+    apt install -y python busybox zip unzip p7zip openjdk-17 aapt aria2 zstd xmlstarlet
 fi
 
 if [ "$(uname)" == "Darwin" ] && [ "$(uname -m)" == "x86_64" ];then
